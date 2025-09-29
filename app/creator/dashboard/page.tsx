@@ -56,7 +56,9 @@ export default function CreatorDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Games</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Trophy className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">24</div>
@@ -67,7 +69,9 @@ export default function CreatorDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Players</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">1,247</div>
@@ -78,7 +82,9 @@ export default function CreatorDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Prizes Distributed</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">₹2,45,000</div>
@@ -89,7 +95,9 @@ export default function CreatorDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Upcoming Games</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">3</div>
@@ -99,7 +107,7 @@ export default function CreatorDashboard() {
         </div>
 
         {/* Games List */}
-        <GameList userType="creator" games={mockGames} />
+        <GameList userType="creator" games={mockGames} showPagination={true} />
       </div>
     </div>
   )

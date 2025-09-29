@@ -174,7 +174,7 @@ export default function HomePage() {
               <Trophy size={24} />
               <span className="font-bold">BingoHub</span>
             </div>
-            <div className="text-sm text-muted-foreground">© 2024 BingoHub. All rights reserved.</div>
+            <div className="text-sm text-muted-foreground">© 2025 BingoHub. All rights reserved.</div>
           </div>
         </div>
       </footer>

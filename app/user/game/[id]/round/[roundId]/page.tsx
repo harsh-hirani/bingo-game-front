@@ -6,7 +6,7 @@ const mockUserRoundData = {
   number: 2,
   status: "live" as const,
   ticketNumbers: [
-    [1, null, 25, null, 57, null, 77, null, null],
+    [1, null, 25, null, 57, null, 77, null, 83],
     [null, 17, null, 37, null, 58, null, 78, 81],
     [4, null, 28, null, 46, null, 65, null, 85],
   ] as (number | null)[][],

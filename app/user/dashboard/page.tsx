@@ -61,7 +61,9 @@ export default function UserDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Games Played</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Target className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">47</div>
@@ -72,7 +74,9 @@ export default function UserDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Winnings</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Trophy className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">₹12,500</div>
@@ -83,7 +87,9 @@ export default function UserDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">23%</div>
@@ -94,7 +100,9 @@ export default function UserDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Upcoming Games</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">2</div>
@@ -104,7 +112,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Games List */}
-        <GameList userType="user" games={mockUserGames} />
+        <GameList userType="user" games={mockUserGames} showPagination={true} />
       </div>
     </div>
   )

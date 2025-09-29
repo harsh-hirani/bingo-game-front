@@ -7,7 +7,9 @@ import { PrizePatterns } from "./prize-patterns"
 import { CreatorRoundControls } from "./creator-round-controls"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Play, Pause, Square, SkipForward } from "lucide-react"
+import { Play, Pause, Square, SkipForward, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 
 interface CreatorRoundViewProps {
   roundData: {
@@ -40,6 +42,8 @@ interface CreatorRoundViewProps {
 
 export function CreatorRoundView({ roundData }: CreatorRoundViewProps) {
   const [gameStatus, setGameStatus] = useState<"live" | "paused" | "ended">(roundData.status)
+  const params = useParams()
+  const gameId = params?.id as string
 
   const handlePlayPause = () => {
     setGameStatus(gameStatus === "live" ? "paused" : "live")
@@ -70,6 +74,14 @@ export function CreatorRoundView({ roundData }: CreatorRoundViewProps) {
         {/* Header with Controls */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
+            <div className="flex items-center gap-4 mb-4">
+              <Link href={`/creator/game/${gameId}`}>
+                <Button variant="outline" size="sm">
+                  <ArrowLeft size={16} className="mr-2" />
+                  Back to Lobby
+                </Button>
+              </Link>
+            </div>
             <h1 className="text-3xl font-bold mb-2">Round {roundData.number} - Creator View</h1>
             <p className="text-muted-foreground">Manage the game and approve winners</p>
           </div>

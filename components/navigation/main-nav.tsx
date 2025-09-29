@@ -79,7 +79,7 @@ export function MainNav({ userType, userName = "User" }: MainNavProps) {
                   <span className="hidden sm:inline">{userName}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 z-50">
                 <DropdownMenuItem>
                   <Settings size={16} className="mr-2" />
                   Settings

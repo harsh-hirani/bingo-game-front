@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CountdownTimer } from "./countdown-timer"
-import { Trophy, Users, Clock, Play, Pause, Calendar, Award, Crown } from "lucide-react"
+import { Trophy, Users, Clock, Play, Pause, Calendar, Award, Crown, ExternalLink } from "lucide-react"
+import Link from "next/link"
 
 interface Round {
   id: string
@@ -66,6 +67,14 @@ export function GameLobby({ userType, game, rounds, leaderboard }: GameLobbyProp
         return <Trophy size={16} />
       default:
         return <Clock size={16} />
+    }
+  }
+
+  const getRoundUrl = (roundId: string) => {
+    if (userType === "creator") {
+      return `/creator/game/${game.id}/round/${roundId}`
+    } else {
+      return `/game/${game.id}/round/${roundId}`
     }
   }
 
@@ -147,12 +156,32 @@ export function GameLobby({ userType, game, rounds, leaderboard }: GameLobbyProp
                           <span className="ml-1 capitalize">{round.status}</span>
                         </Badge>
                       </div>
-                      {round.status === "join" && (
-                        <Button size="sm">
-                          <Play size={16} className="mr-2" />
-                          Join Round
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {round.status === "join" && (
+                          <Link href={getRoundUrl(round.id)}>
+                            <Button size="sm">
+                              <Play size={16} className="mr-2" />
+                              Join Round
+                            </Button>
+                          </Link>
+                        )}
+                        {round.status === "live" && (
+                          <Link href={getRoundUrl(round.id)}>
+                            <Button size="sm" variant="outline">
+                              <ExternalLink size={16} className="mr-2" />
+                              View Live
+                            </Button>
+                          </Link>
+                        )}
+                        {round.status === "ended" && (
+                          <Link href={getRoundUrl(round.id)}>
+                            <Button size="sm" variant="secondary">
+                              <Trophy size={16} className="mr-2" />
+                              View Results
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>

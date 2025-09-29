@@ -3,6 +3,10 @@
 import { BingoTicket } from "./bingo-ticket"
 import { CalledNumbersDisplay } from "./called-numbers-display"
 import { PrizePatterns } from "./prize-patterns"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 
 interface RoundViewProps {
   userType: "creator" | "user"
@@ -26,14 +30,34 @@ interface RoundViewProps {
 }
 
 export function RoundView({ userType, roundData }: RoundViewProps) {
+  const params = useParams()
+  const gameId = params?.id as string
+
   const handleNumberClick = (number: number) => {
     console.log("Number clicked:", number)
     // Handle number marking logic
   }
 
+  const getBackUrl = () => {
+    if (userType === "creator") {
+      return `/creator/game/${gameId}`
+    } else {
+      return `/game/${gameId}`
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Link href={getBackUrl()}>
+            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
+              <ArrowLeft size={16} />
+              Back to Lobby
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2">Round {roundData.number}</h1>
