@@ -12,18 +12,15 @@ import { Combobox } from "@/components/ui/combobox"
 import { Calendar, Clock, Users, Trophy, Plus, Trash2 } from "lucide-react"
 
 const BINGO_PATTERNS = [
-  // Standard patterns
   { value: "full-house", label: "Full House (all 15 numbers)" },
   { value: "any-one-line", label: "Any One Line (Top / Middle / Bottom)" },
   { value: "two-lines", label: "Two Lines (any 2 horizontal rows)" },
   { value: "early-five", label: "Early Five (first 5 numbers marked)" },
 
-  // Corner / block patterns
   { value: "four-corners", label: "Four Corners" },
   { value: "postage-stamp", label: "Postage Stamp (2×2 block)" },
   { value: "window", label: "Window (two opposite 2×2 blocks)" },
 
-  // Letter / shape patterns
   { value: "t-shape", label: "T Shape" },
   { value: "cross-plus", label: "Cross / Plus (+)" },
   { value: "x-shape", label: "X Shape (diagonals)" },
@@ -32,12 +29,10 @@ const BINGO_PATTERNS = [
   { value: "l-shape", label: "L Shape" },
   { value: "i-shape", label: "I Shape (full column)" },
 
-  // Frame / area patterns
   { value: "border", label: "Border (outer frame)" },
   { value: "center-line", label: "Center Line / Center Block" },
   { value: "diamond", label: "Diamond" },
 
-  // Mixed / fun patterns
   { value: "four-corners-middle", label: "Four Corners + Middle" },
   { value: "zig-zag", label: "Zig-Zag / Staircase" },
   { value: "wave-pattern", label: "Wave Pattern" },
@@ -45,7 +40,7 @@ const BINGO_PATTERNS = [
 
 interface PrizePattern {
   id: string
-  patternName: string
+  patternName: string // stores the VALUE ("full-house")
   prizeDescription: string
   prizeAmount: string
 }
@@ -77,6 +72,7 @@ export function GameCreationForm() {
   const [totalPrizePool, setTotalPrizePool] = useState(0)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // ✅ recalc prize totals when prizeAmounts change
   useEffect(() => {
     const updatedRounds = prizeRounds.map((round) => {
       const roundTotal = round.patterns.reduce((sum, pattern) => {
@@ -90,7 +86,7 @@ export function GameCreationForm() {
 
     setPrizeRounds(updatedRounds)
     setTotalPrizePool(newTotalPrizePool)
-  }, [prizeRounds.map((r) => r.patterns.map((p) => p.prizeAmount).join(",")).join("|")])
+  }, [JSON.stringify(prizeRounds.map((r) => r.patterns.map((p) => p.prizeAmount)))]) // stable dep
 
   const addPrizeRound = () => {
     const newRoundNumber = prizeRounds.length + 1
@@ -142,21 +138,26 @@ export function GameCreationForm() {
     )
   }
 
-  const updatePattern = (roundId: string, patternId: string, field: keyof PrizePattern, value: string) => {
-    setPrizeRounds(
-      prizeRounds.map((round) => {
-        if (round.id === roundId) {
-          return {
+  const updatePattern = (
+  roundId: string,
+  patternId: string,
+  field: keyof Pattern,
+  value: string
+) => {
+  setRounds((prev) =>
+    prev.map((round) =>
+      round.id === roundId
+        ? {
             ...round,
-            patterns: round.patterns.map((pattern) =>
-              pattern.id === patternId ? { ...pattern, [field]: value } : pattern,
+            patterns: round.patterns.map((p) =>
+              p.id === patternId ? { ...p, [field]: value } : p
             ),
           }
-        }
-        return round
-      }),
+        : round
     )
-  }
+  )
+}
+
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
@@ -167,7 +168,7 @@ export function GameCreationForm() {
       newErrors.numberOfUsers = "Number of users must be at least 1"
     }
 
-    // Validate prize rounds
+    // ✅ Validate prize rounds
     prizeRounds.forEach((round, roundIndex) => {
       round.patterns.forEach((pattern, patternIndex) => {
         if (!pattern.patternName.trim()) {
@@ -188,8 +189,15 @@ export function GameCreationForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (validateForm()) {
-      console.log("Game created:", { formData, prizeRounds, totalPrizePool })
-      // Handle game creation
+      // map pattern values back to labels for submission
+      const roundsWithLabels = prizeRounds.map((round) => ({
+        ...round,
+        patterns: round.patterns.map((p) => ({
+          ...p,
+          patternLabel: BINGO_PATTERNS.find((bp) => bp.value === p.patternName)?.label || p.patternName,
+        })),
+      }))
+      console.log("Game created:", { formData, prizeRounds: roundsWithLabels, totalPrizePool })
     }
   }
 
@@ -304,7 +312,7 @@ export function GameCreationForm() {
                 </div>
 
                 <div className="space-y-4">
-                  {prizeRounds.map((round, roundIndex) => (
+                  {prizeRounds.map((round) => (
                     <Card key={round.id} className="relative">
                       <CardHeader className="pb-4">
                         <div className="flex items-center justify-between">
@@ -328,29 +336,25 @@ export function GameCreationForm() {
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {round.patterns.map((pattern, patternIndex) => (
+                        {round.patterns.map((pattern) => (
                           <div key={pattern.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
                             <div className="space-y-2">
                               <Label htmlFor={`pattern_${round.id}_${pattern.id}`}>Pattern Name *</Label>
                               <Combobox
-                                options={BINGO_PATTERNS}
-                                value={BINGO_PATTERNS.find((p) => p.label === pattern.patternName)?.value || ""}
-                                onValueChange={(value) => {
-                                  const selectedPattern = BINGO_PATTERNS.find((p) => p.value === value)
-                                  if (selectedPattern) {
-                                    updatePattern(round.id, pattern.id, "patternName", selectedPattern.label)
-                                  }
-                                }}
-                                placeholder="Select a pattern..."
-                                searchPlaceholder="Search patterns..."
-                                emptyText="No pattern found."
-                                className={errors[`pattern_${round.id}_${pattern.id}`] ? "border-destructive" : ""}
-                              />
-                              {errors[`pattern_${round.id}_${pattern.id}`] && (
-                                <p className="text-sm text-destructive">
-                                  {errors[`pattern_${round.id}_${pattern.id}`]}
-                                </p>
-                              )}
+  options={BINGO_PATTERNS}
+  value={pattern.patternName} // stores only the option.value
+  onValueChange={(value) => updatePattern(round.id, pattern.id, "patternName", value)}
+  placeholder="Select a pattern..."
+  searchPlaceholder="Search patterns..."
+  emptyText="No pattern found."
+  className={errors[`pattern_${round.id}_${pattern.id}`] ? "border-destructive" : ""}
+/>
+{errors[`pattern_${round.id}_${pattern.id}`] && (
+  <p className="text-sm text-destructive">
+    {errors[`pattern_${round.id}_${pattern.id}`]}
+  </p>
+)}
+
                             </div>
 
                             <div className="space-y-2">
@@ -376,7 +380,9 @@ export function GameCreationForm() {
                                 type="number"
                                 placeholder="5000"
                                 value={pattern.prizeAmount}
-                                onChange={(e) => updatePattern(round.id, pattern.id, "prizeAmount", e.target.value)}
+                                onChange={(e) =>
+                                  updatePattern(round.id, pattern.id, "prizeAmount", e.target.value)
+                                }
                               />
                             </div>
 
