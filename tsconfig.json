@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/page.jsx", "app/layout.jsx", "app/auth/creator/login/page.jsx", "app/auth/creator/register/page.jsx", "app/auth/user/login/page.jsx", "app/auth/user/register/page.jsx", "app/creator/create-game/page.jsx", "app/creator/dashboard/page.jsx", "app/creator/game/[id]/lobby/page.jsx", "app/creator/game/[id]/round/[roundId]/page.jsx", "app/game/[id]/lobby/page.jsx", "app/game/[id]/round/[roundId]/page.jsx", "app/user/dashboard/page.jsx", "app/user/game/[id]/round/[roundId]/page.jsx", "components/auth/auth-form.jsx", "components/game/bingo-ticket.jsx", "components/game/called-numbers-display.jsx", "components/game/countdown-timer.jsx", "components/game/creator-round-controls.jsx", "components/game/creator-round-view.jsx", "components/game/game-creation-form.jsx", "components/game/game-list.jsx", "components/game/game-lobby.jsx", "components/game/prize-patterns.jsx", "components/game/round-view.jsx", "components/navigation/main-nav.jsx", "components/ui/badge.jsx", "components/ui/button.jsx", "components/ui/card.jsx", "components/ui/checkbox.jsx", "components/ui/dialog.jsx", "components/ui/dropdown-menu.jsx", "components/ui/input.jsx", "components/ui/label.jsx", "components/ui/pagination.jsx", "components/ui/textarea.jsx", "components/theme-provider.jsx"],
+  "exclude": ["node_modules"]
+}
