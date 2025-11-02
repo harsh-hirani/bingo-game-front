@@ -1,48 +1,42 @@
+"use client";
 import { GameList } from "@/components/game/game-list";
 import { MainNav } from "@/components/navigation/main-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, Target, Calendar, TrendingUp } from "lucide-react";
-
+import React, { useEffect, useState } from "react";
 // Mock data - replace with actual data fetching
-const mockUserGames = [
-  {
-    id: "1",
-    title: "Weekend Bingo Bonanza",
-    dateTime: "2024-01-20T19:00:00",
-    status: "upcoming",
-    players: 45,
-    maxPlayers: 100,
-    totalPrize: "25000",
-    rounds: 5,
-    organizer: "Mumbai Bingo Club",
-  },
-  {
-    id: "2",
-    title: "New Year Special",
-    dateTime: "2024-01-01T20:00:00",
-    status: "completed",
-    players: 89,
-    maxPlayers: 100,
-    totalPrize: "50000",
-    rounds: 7,
-    organizer: "Delhi Gaming Society",
-    winnings: "5000",
-  },
-  {
-    id: "3",
-    title: "Friday Night Fun",
-    dateTime: "2024-01-19T21:00:00",
-    status: "completed",
-    players: 67,
-    maxPlayers: 80,
-    totalPrize: "15000",
-    rounds: 4,
-    organizer: "Bangalore Bingo Hub",
-    winnings: "0",
-  },
-];
 
 export default function UserDashboard() {
+
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+
+    const fetchGames = async () => {
+      try {
+        const token = localStorage.getItem("access_token"); // JWT access token
+        const response = await fetch("http://localhost:8000/api/games/listlatest/", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }), // attach token if present
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+
+        const data = await response.json();
+        setGames(data);
+      } catch (error) {
+        console.error("Error fetching games:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGames();
+  }, []);
   return (
     <div className="min-h-screen bg-background">
       <MainNav userType="user" userName="Jane Player" />
@@ -112,7 +106,9 @@ export default function UserDashboard() {
         </div>
 
         {/* Games List */}
-        <GameList userType="user" games={mockUserGames} showPagination={true} />
+        {loading ? (
+          <p>Loading games...</p>):
+        <GameList userType="user" games={games} showPagination={true} />}
       </div>
     </div>
   );

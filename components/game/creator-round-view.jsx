@@ -88,22 +88,16 @@ export function CreatorRoundView({ roundData }) {
         </div>
 
         {/* Main Game Layout */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Left Side: Called Numbers */}
-          <div className="space-y-4">
+          <div className="col-span-1"></div>
+          <div className="space-y-4 space-x-11 col-span-2 ">
             <h2 className="text-xl font-semibold">Called Numbers</h2>
             <CalledNumbersDisplay calledNumbers={roundData.calledNumbers} currentNumber={roundData.currentNumber} />
           </div>
 
           {/* Right Side: Sample Ticket */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Sample Ticket</h2>
-            <BingoTicket
-              ticketNumbers={roundData.ticketNumbers}
-              calledNumbers={roundData.calledNumbers}
-              disabled={true}
-            />
-          </div>
+          
         </div>
 
         {/* Prize Patterns */}

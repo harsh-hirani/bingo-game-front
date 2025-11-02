@@ -9,8 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export function AuthForm({ type, userType }) {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -68,10 +73,54 @@ export function AuthForm({ type, userType }) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setLoading(true)
+    setError("")
     if (validateForm()) {
       console.log("Form submitted:", formData)
+      const base = 'http://localhost:8000/api'
+      const r = userType === "creator" ? "creator" : "player"
+      const uri = `/${r}/${type}/`
+      try {
+        const res = await fetch(base + uri, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            full_name: formData.name,
+            mobile_number: formData.mobileNumber,
+            aadhaar_number: formData.aadhaarNumber,
+            pan_number: formData.panNumber,
+            address_line: formData.addressLine,
+            postal_code: formData.postalCode,
+
+          }),
+        })
+        const data = await res.json()
+        console.log("Response data:", data)
+        if (!res.ok) throw new Error(data.error || "Something went wrong")
+        if (data.access && data.refresh) {
+          localStorage.setItem("access_token", data.access)
+          localStorage.setItem("refresh_token", data.refresh)
+          localStorage.setItem("user", JSON.stringify(data.user))
+          // In your login success handler
+          localStorage.setItem("user_id", data.useId)
+          localStorage.setItem("user_name", data.userName)  // ✅ Add this
+        }
+        // ✅ Redirect based on user type
+        if (userType === "creator") {
+          router.push("/creator/dashboard")
+        } else {
+          router.push("/user/dashboard")
+        }
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      setLoading(false)
     }
   }
 
@@ -289,19 +338,23 @@ export function AuthForm({ type, userType }) {
               )}
               {errors.acceptTerms && <p className="text-sm text-destructive">{errors.acceptTerms}</p>}
 
-              <Button type="submit" className="w-full" size="lg">
-                {isLogin ? "Sign In" : "Create Account"}
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading
+                  ? "Processing..."
+                  : isLogin
+                    ? "Login"
+                    : `Register as ${userType}`}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <Link href={isLogin ? `/auth/register?userType=${userType}` : `/auth/login?userType=${userType}`}>
+                <Link href={isLogin ? `/auth/${userType}/register?userType=${userType}` : `/auth/${userType}/login?userType=${userType}`}>
                   <Button variant="link" className="p-0 h-auto font-normal">
                     {isLogin ? "Sign up" : "Sign in"}
                   </Button>
                 </Link>
               </div>
-
+              {error && <p className="text-sm text-destructive text-center">{error}</p>}
             </form>
           </CardContent>
         </Card>

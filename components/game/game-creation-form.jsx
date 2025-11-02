@@ -7,8 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, Users, Trophy, Plus, Trash2 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export function GameCreationForm() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     title: "",
     dateTime: "",
@@ -62,9 +64,9 @@ export function GameCreationForm() {
       prizeRounds.map((round) =>
         round.id === roundId
           ? {
-              ...round,
-              patterns: [...round.patterns, { id: Date.now().toString(), patternName: "", prizeDescription: "", prizeAmount: "" }],
-            }
+            ...round,
+            patterns: [...round.patterns, { id: Date.now().toString(), patternName: "", prizeDescription: "", prizeAmount: "" }],
+          }
           : round
       )
     )
@@ -85,9 +87,9 @@ export function GameCreationForm() {
       prev.map((round) =>
         round.id === roundId
           ? {
-              ...round,
-              patterns: round.patterns.map((p) => (p.id === patternId ? { ...p, [field]: value } : p)),
-            }
+            ...round,
+            patterns: round.patterns.map((p) => (p.id === patternId ? { ...p, [field]: value } : p)),
+          }
           : round
       )
     )
@@ -112,12 +114,59 @@ export function GameCreationForm() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (validateForm()) {
-      console.log("Game created:", { formData, prizeRounds, totalPrizePool })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    try {
+      // 🔹 Fetch JWT token from localStorage
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        alert("You must be logged in to create a game!");
+        return;
+      }
+
+      // 🔹 Prepare the payload
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        number_of_users: parseInt(formData.numberOfUsers),
+        total_prize_pool: totalPrizePool, // You must have computed this earlier
+        date_time: formData.dateTime,
+        prize_rounds: prizeRounds,
+      };
+
+      // 🔹 Send request to Django backend
+      const response = await fetch("http://localhost:8000/api/creator/games/create/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ Game created:", data);
+        alert("Game created successfully!");
+        // Optionally,  redirect
+        router.push("/creator/games");
+
+      } else {
+        const errorData = await response.json();
+        console.error("❌ Error creating game:", errorData);
+        alert(`Failed to create game: ${JSON.stringify(errorData)}`);
+      }
+    } catch (err) {
+      console.error("🚨 Network or server error:", err);
+      alert("Something went wrong while creating the game.");
     }
-  }
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
@@ -242,34 +291,24 @@ export function GameCreationForm() {
                             >
                               <option value="">Select a pattern...</option>
                               <optgroup label="Standard Patterns">
-                                <option value="full-house">Full House (all 15 numbers)</option>
+                                <option value="full-housie">Full House (all 15 numbers)</option>
                                 <option value="any-one-line">Any One Line (Top / Middle / Bottom)</option>
                                 <option value="two-lines">Two Lines (any 2 horizontal rows)</option>
                                 <option value="early-five">Early Five (first 5 numbers marked)</option>
                               </optgroup>
                               <optgroup label="Corner / Block Patterns">
                                 <option value="four-corners">Four Corners</option>
-                                <option value="postage-stamp">Postage Stamp (2×2 block)</option>
-                                <option value="window">Window (two opposite 2×2 blocks)</option>
                               </optgroup>
                               <optgroup label="Letter / Shape Patterns">
                                 <option value="t-shape">T Shape</option>
                                 <option value="cross-plus">Cross / Plus (+)</option>
-                                <option value="x-shape">X Shape (diagonals)</option>
-                                <option value="h-shape">H Shape</option>
-                                <option value="e-shape">E Shape</option>
                                 <option value="l-shape">L Shape</option>
-                                <option value="i-shape">I Shape (full column)</option>
                               </optgroup>
                               <optgroup label="Frame / Area Patterns">
-                                <option value="border">Border (outer frame)</option>
-                                <option value="center-line">Center Line / Center Block</option>
-                                <option value="diamond">Diamond</option>
+                                <option value="border-shape">Border (outer frame)</option>
                               </optgroup>
                               <optgroup label="Mixed / Fun Patterns">
                                 <option value="four-corners-middle">Four Corners + Middle</option>
-                                <option value="zig-zag">Zig-Zag / Staircase</option>
-                                <option value="wave-pattern">Wave Pattern</option>
                               </optgroup>
                             </select>
                             {errors[`pattern_${round.id}_${pattern.id}`] && <p className="text-sm text-destructive">{errors[`pattern_${round.id}_${pattern.id}`]}</p>}
@@ -318,7 +357,7 @@ export function GameCreationForm() {
 
               <div className="flex gap-4 pt-6">
                 <Button type="submit" size="lg" className="flex-1">Create Game</Button>
-                <Button type="button" variant="outline" size="lg">Save as Draft</Button>
+                {/* <Button type="button" variant="outline" size="lg">Save as Draft</Button> */}
               </div>
             </form>
           </CardContent>

@@ -45,7 +45,7 @@ export function GameList({ userType, games, showPagination = true }) {
     if (userType === "creator") {
       return `/creator/game/${gameId}`
     } else {
-      return `/game/${gameId}`
+      return `/game/${gameId}/lobby`
     }
   }
 

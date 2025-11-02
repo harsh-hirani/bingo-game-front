@@ -1,46 +1,107 @@
-import { GameList } from "@/components/game/game-list";
-import { MainNav } from "@/components/navigation/main-nav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Users, Calendar, TrendingUp } from "lucide-react";
+"use client"
 
-// Mock data - replace with actual data fetching
-const mockGames = [
-  {
-    id: "1",
-    title: "Weekend Bingo Bonanza",
-    dateTime: "2024-01-20T19:00:00",
-    status: "upcoming",
-    players: 45,
-    maxPlayers: 100,
-    totalPrize: "25000",
-    rounds: 5,
-  },
-  {
-    id: "2",
-    title: "New Year Special",
-    dateTime: "2024-01-01T20:00:00",
-    status: "completed",
-    players: 89,
-    maxPlayers: 100,
-    totalPrize: "50000",
-    rounds: 7,
-  },
-  {
-    id: "3",
-    title: "Friday Night Fun",
-    dateTime: "2024-01-19T21:00:00",
-    status: "live",
-    players: 67,
-    maxPlayers: 80,
-    totalPrize: "15000",
-    rounds: 4,
-  },
-];
+import { useState, useEffect } from "react"
+import { GameList } from "@/components/game/game-list"
+import { MainNav } from "@/components/navigation/main-nav"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Trophy, Users, Calendar, TrendingUp } from "lucide-react"
 
 export default function CreatorDashboard() {
+  const [games, setGames] = useState([])
+  const [stats, setStats] = useState({
+    totalGames: 0,
+    totalPlayers: 0,
+    prizesDistributed: "0",
+    upcomingGames: 0,
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [userName, setUserName] = useState("Creator")
+
+  useEffect(() => {
+    const fetchCreatorGames = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const token = localStorage.getItem("access_token")
+        const storedUserName = localStorage.getItem("user_name") || "Creator"
+        setUserName(storedUserName)
+
+        if (!token) {
+          throw new Error("Please login to continue")
+        }
+
+        const response = await fetch("http://localhost:8000/api/creator/games/", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Session expired. Please login again.")
+          }
+          throw new Error(`Failed to fetch games: ${response.status}`)
+        }
+
+        const data = await response.json()
+        console.log("Fetched games:", data)
+
+        setGames(data.games || [])
+        setStats(data.stats || stats)
+      } catch (err) {
+        console.error("Error fetching games:", err)
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCreatorGames()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <MainNav userType="creator" userName={userName} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <MainNav userType="creator" userName={userName} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-destructive mb-4">Error: {error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <MainNav userType="creator" userName="John Creator" />
+      <MainNav userType="creator" userName={userName} />
 
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
@@ -61,8 +122,10 @@ export default function CreatorDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-muted-foreground">+3 from last month</p>
+              <div className="text-2xl font-bold">{stats.totalGames}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.totalGames > 0 ? "Games created" : "No games yet"}
+              </p>
             </CardContent>
           </Card>
 
@@ -74,8 +137,10 @@ export default function CreatorDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,247</div>
-              <p className="text-xs text-muted-foreground">+180 from last month</p>
+              <div className="text-2xl font-bold">{stats.totalPlayers}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.totalPlayers > 0 ? "Players registered" : "No players yet"}
+              </p>
             </CardContent>
           </Card>
 
@@ -87,8 +152,10 @@ export default function CreatorDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹2,45,000</div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
+              <div className="text-2xl font-bold">₹{stats.prizesDistributed}</div>
+              <p className="text-xs text-muted-foreground">
+                {parseFloat(stats.prizesDistributed) > 0 ? "Total prizes" : "No prizes yet"}
+              </p>
             </CardContent>
           </Card>
 
@@ -100,15 +167,30 @@ export default function CreatorDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">Next: Tomorrow 7 PM</p>
+              <div className="text-2xl font-bold">{stats.upcomingGames}</div>
+              <p className="text-xs text-muted-foreground">
+                {stats.upcomingGames > 0 ? "Scheduled games" : "No upcoming games"}
+              </p>
             </CardContent>
           </Card>
         </div>
 
         {/* Games List */}
-        <GameList userType="creator" games={mockGames} showPagination={true} />
+        {games.length > 0 ? (
+          <GameList userType="creator" games={games} showPagination={true} />
+        ) : (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Trophy className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">No games yet</h3>
+              <p className="text-muted-foreground mb-4">Create your first bingo game to get started</p>
+              <button className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90">
+                Create Game
+              </button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
-  );
+  )
 }

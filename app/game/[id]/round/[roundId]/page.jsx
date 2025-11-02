@@ -1,4 +1,5 @@
 import { RoundView } from "@/components/game/round-view";
+import { MainNav } from "@/components/navigation/main-nav";
 
 // Mock data - replace with actual data fetching
 const mockRoundData = {
@@ -48,5 +49,10 @@ const mockRoundData = {
 export default function RoundPage({ params, searchParams }) {
   const userType = searchParams?.userType || "user";
 
-  return <RoundView userType={userType} roundData={mockRoundData} />;
+  return (
+  <>
+  
+  <MainNav/>
+  <RoundView userType={userType} roundData={mockRoundData} />
+  </>)
 }

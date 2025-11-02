@@ -3,6 +3,7 @@ import { GeistMono } from "geist/font/mono";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import "./globals.css";
+import { Toaster } from "sonner"
 
 export const metadata = {
   title: "BingoHub - Professional Bingo & Housie Platform",
@@ -14,7 +15,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        
+        <Suspense fallback={<div>Loading...</div>}>{children}<Toaster position="top-right" richColors /></Suspense>
+
         <Analytics />
       </body>
     </html>

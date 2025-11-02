@@ -156,16 +156,16 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
                   <CardContent>
                     <div className="grid md:grid-cols-3 gap-4">
                       <div>
-                        <h4 className="font-semibold text-sm text-muted-foreground">Pattern</h4>
-                        <p className="font-medium">{round.patternName}</p>
+                        <h4 className="font-semibold text-sm text-muted-foreground">Total Patterns</h4>
+                        <p className="font-medium">{round.totalPatterns}</p>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm text-muted-foreground">Prize</h4>
-                        <p className="font-medium">{round.prizeDescription}</p>
+                        <h4 className="font-semibold text-sm text-muted-foreground">Called Numbers</h4>
+                        <p className="font-medium">{round.calledNumbers} / 90</p>
                       </div>
                       <div>
                         <h4 className="font-semibold text-sm text-muted-foreground">Amount</h4>
-                        <p className="font-medium text-primary">₹{round.prizeAmount}</p>
+                        <p className="font-medium text-primary">₹{round.totalPrize}</p>
                       </div>
                     </div>
                     {round.prizeWon && (

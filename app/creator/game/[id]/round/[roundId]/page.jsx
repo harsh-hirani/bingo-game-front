@@ -1,5 +1,6 @@
 import { CreatorRoundView } from "@/components/game/creator-round-view";
-
+import { MainNav } from "@/components/navigation/main-nav";
+import { GameNav } from "@/components/navigation/game-nav";
 // Mock data with creator-specific information
 const mockCreatorRoundData = {
   id: "1",
@@ -85,5 +86,10 @@ const mockCreatorRoundData = {
 };
 
 export default function CreatorRoundPage({ params }) {
-  return <CreatorRoundView roundData={mockCreatorRoundData} />;
+  return <>
+    {/* <MainNav userType="creator" userName="John Creator" /> */}
+    <MainNav userType="creator" userName="John Creator" />
+    <GameNav gameId={params.id} userType="creator" />
+    <CreatorRoundView roundData={mockCreatorRoundData} />;
+  </>;
 }
