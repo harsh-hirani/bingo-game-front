@@ -5,19 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CountdownTimer } from "./countdown-timer"
-import { Trophy, Users, Clock, Play, Pause, Calendar, Award, Crown, ExternalLink } from "lucide-react"
+import { Trophy, Users, Clock, Play, Pause, Calendar, Award, Crown, ExternalLink, Check, Edit } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
-export function GameLobby({ userType, game, rounds, leaderboard }) {
+export function GameLobby({ userType, game, rounds, leaderboard, gameId }) {
+  const [gameStatus, setGameStatus] = useState(game.status)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+
   const getStatusColor = (status) => {
     switch (status) {
-      case "live":
+      case "ongoing":
         return "bg-success text-success-foreground"
-      case "join":
-        return "bg-primary text-primary-foreground"
       case "upcoming":
         return "bg-muted text-muted-foreground"
-      case "ended":
+      case "paused":
+        return "bg-warning text-warning-foreground"
+      case "completed":
         return "bg-secondary text-secondary-foreground"
       default:
         return "bg-muted text-muted-foreground"
@@ -26,13 +30,13 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "live":
+      case "ongoing":
         return <Play size={16} />
-      case "join":
-        return <Users size={16} />
       case "upcoming":
         return <Clock size={16} />
-      case "ended":
+      case "paused":
+        return <Pause size={16} />
+      case "completed":
         return <Trophy size={16} />
       default:
         return <Clock size={16} />
@@ -44,6 +48,61 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
       return `/creator/game/${game.id}/round/${roundId}`
     } else {
       return `/game/${game.id}/round/${roundId}`
+    }
+  }
+
+  const updateGameStatus = async (newStatus) => {
+    setIsUpdatingStatus(true)
+
+    try {
+      const token = localStorage.getItem("access_token")
+
+      if (!token) {
+        toast.error("Please login to continue")
+        return
+      }
+
+      const response = await fetch(`http://localhost:8000/api/creator/game/${gameId}/status/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update game status")
+      }
+
+      const data = await response.json()
+      console.log("Status updated:", data)
+
+      setGameStatus(newStatus)
+      toast.success(`Game ${newStatus === "ongoing" ? "started" : newStatus === "paused" ? "paused" : "completed"} successfully!`)
+    } catch (err) {
+      console.error("Error updating status:", err)
+      toast.error("Failed to update game status")
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
+
+  const handleStartGame = () => {
+    updateGameStatus("ongoing")
+  }
+
+  const handlePauseGame = () => {
+    updateGameStatus("paused")
+  }
+
+  const handleResumeGame = () => {
+    updateGameStatus("ongoing")
+  }
+
+  const handleCompleteGame = () => {
+    if (confirm("Are you sure you want to mark this game as completed? This action cannot be undone.")) {
+      updateGameStatus("completed")
     }
   }
 
@@ -66,9 +125,11 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <CountdownTimer targetDate={game.dateTime} />
-            <Badge className={getStatusColor(game.status)}>
-              {game.status.charAt(0).toUpperCase() + game.status.slice(1)}
+            { gameStatus === "upcoming" &&
+            <CountdownTimer targetDate={game.dateTime} />}
+            <Badge className={getStatusColor(gameStatus)}>
+              {getStatusIcon(gameStatus)}
+              <span className="ml-1 text-2xl">{gameStatus.charAt(0).toUpperCase() + gameStatus.slice(1)}</span>
             </Badge>
           </div>
         </div>
@@ -101,14 +162,67 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
               <h2 className="text-2xl font-bold">Rounds</h2>
               {userType === "creator" && (
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Pause size={16} className="mr-2" />
-                    Pause Game
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Calendar size={16} className="mr-2" />
-                    Reschedule
-                  </Button>
+                  {/* Start Game Button */}
+                  {gameStatus === "upcoming" && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleStartGame}
+                      disabled={isUpdatingStatus}
+                    >
+                      <Play size={16} className="mr-2" />
+                      {isUpdatingStatus ? "Starting..." : "Start Game"}
+                    </Button>
+                  )}
+
+                  {/* Pause Game Button */}
+                  {gameStatus === "ongoing" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePauseGame}
+                      disabled={isUpdatingStatus}
+                    >
+                      <Pause size={16} className="mr-2" />
+                      {isUpdatingStatus ? "Pausing..." : "Pause Game"}
+                    </Button>
+                  )}
+
+                  {/* Resume Game Button */}
+                  {gameStatus === "paused" && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleResumeGame}
+                      disabled={isUpdatingStatus}
+                    >
+                      <Play size={16} className="mr-2" />
+                      {isUpdatingStatus ? "Resuming..." : "Resume Game"}
+                    </Button>
+                  )}
+
+                  {/* Complete Game Button */}
+                  {(gameStatus === "ongoing" || gameStatus === "paused") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCompleteGame}
+                      disabled={isUpdatingStatus}
+                    >
+                      <Check size={16} className="mr-2" />
+                      {isUpdatingStatus ? "Completing..." : "Complete Game"}
+                    </Button>
+                  )}
+
+                  {/* Edit/Reschedule Button */}
+                  {gameStatus === "upcoming" && game.isCreator && (
+                    <Link href={`/creator/game/${gameId}/edit`}>
+                      <Button variant="outline" size="sm">
+                        <Edit size={16} className="mr-2" />
+                        Edit Game
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
@@ -120,36 +234,16 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="text-lg font-bold text-muted-foreground">Round {round.number}</div>
-                        <Badge className={getStatusColor(round.status)}>
-                          {getStatusIcon(round.status)}
-                          <span className="ml-1 capitalize">{round.status}</span>
-                        </Badge>
                       </div>
                       <div className="flex gap-2">
-                        {round.status === "join" && (
-                          <Link href={getRoundUrl(round.id)}>
-                            <Button size="sm">
-                              <Play size={16} className="mr-2" />
-                              Join Round
-                            </Button>
-                          </Link>
-                        )}
-                        {round.status === "live" && (
+                        {
                           <Link href={getRoundUrl(round.id)}>
                             <Button size="sm" variant="outline">
                               <ExternalLink size={16} className="mr-2" />
-                              View Live
+                              {gameStatus === "completed" ? "View Results" : "View Round"}
                             </Button>
                           </Link>
-                        )}
-                        {round.status === "ended" && (
-                          <Link href={getRoundUrl(round.id)}>
-                            <Button size="sm" variant="secondary">
-                              <Trophy size={16} className="mr-2" />
-                              View Results
-                            </Button>
-                          </Link>
-                        )}
+                        }
                       </div>
                     </div>
                   </CardHeader>
@@ -164,15 +258,15 @@ export function GameLobby({ userType, game, rounds, leaderboard }) {
                         <p className="font-medium">{round.calledNumbers} / 90</p>
                       </div>
                       <div>
-                        <h4 className="font-semibold text-sm text-muted-foreground">Amount</h4>
+                        <h4 className="font-semibold text-sm text-muted-foreground">Total Prize</h4>
                         <p className="font-medium text-primary">₹{round.totalPrize}</p>
                       </div>
                     </div>
-                    {round.prizeWon && (
+                    {round.winnersCount > 0 && (
                       <div className="mt-4 p-3 bg-success/10 border border-success/20 rounded-lg">
                         <div className="flex items-center gap-2 text-success">
                           <Trophy size={16} />
-                          <span className="font-semibold">You Won: {round.prizeWon}</span>
+                          <span className="font-semibold">{round.winnersCount} Winner(s)</span>
                         </div>
                       </div>
                     )}

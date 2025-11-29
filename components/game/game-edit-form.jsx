@@ -6,13 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Clock, Users, Trophy, Plus, Trash2 } from "lucide-react"
+import { Calendar, Clock, Users, Trophy, Plus, Trash2, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 
-export function GameCreationForm() {
+export function GameEditForm({ gameId }) {
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     title: "",
     dateTime: "",
@@ -20,21 +21,69 @@ export function GameCreationForm() {
     description: "",
   })
 
-  const [prizeRounds, setPrizeRounds] = useState([
-    {
-      id: "1",
-      name: "Round 1",
-      patterns: [{ id: "1", patternName: "", prizeDescription: "", prizeAmount: "" }],
-      totalPrize: 0,
-    },
-  ])
-
+  const [prizeRounds, setPrizeRounds] = useState([])
   const [totalPrizePool, setTotalPrizePool] = useState(0)
   const [errors, setErrors] = useState({})
 
+  // Fetch existing game data
+  useEffect(() => {
+    const fetchGameData = async () => {
+      try {
+        setLoading(true)
+        const token = localStorage.getItem("access_token")
+
+        if (!token) {
+          router.push("/creator/login")
+          return
+        }
+
+        const response = await fetch(
+          `http://localhost:8000/api/creator/game/${gameId}/detail/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        )
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push("/creator/login")
+            return
+          }
+          throw new Error("Failed to fetch game data")
+        }
+
+        const data = await response.json()
+        console.log("Fetched game data:", data)
+
+        setFormData({
+          title: data.title,
+          dateTime: data.dateTime,
+          numberOfUsers: data.numberOfUsers.toString(),
+          description: data.description,
+        })
+
+        setPrizeRounds(data.prizeRounds || [])
+      } catch (err) {
+        console.error("Error fetching game:", err)
+        toast.error("Failed to load game data")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGameData()
+  }, [gameId, router])
+
+  // Calculate total prize pool
   useEffect(() => {
     const updatedRounds = prizeRounds.map((round) => {
-      const roundTotal = round.patterns.reduce((sum, pattern) => sum + (parseFloat(pattern.prizeAmount) || 0), 0)
+      const roundTotal = round.patterns.reduce(
+        (sum, pattern) => sum + (parseFloat(pattern.prizeAmount) || 0),
+        0
+      )
       return { ...round, totalPrize: roundTotal }
     })
     const newTotalPrizePool = updatedRounds.reduce((sum, round) => sum + round.totalPrize, 0)
@@ -56,7 +105,10 @@ export function GameCreationForm() {
   const removePrizeRound = (id) => {
     if (prizeRounds.length > 1) {
       const updatedRounds = prizeRounds.filter((round) => round.id !== id)
-      const renumberedRounds = updatedRounds.map((round, index) => ({ ...round, name: `Round ${index + 1}` }))
+      const renumberedRounds = updatedRounds.map((round, index) => ({
+        ...round,
+        name: `Round ${index + 1}`,
+      }))
       setPrizeRounds(renumberedRounds)
     }
   }
@@ -66,9 +118,12 @@ export function GameCreationForm() {
       prizeRounds.map((round) =>
         round.id === roundId
           ? {
-            ...round,
-            patterns: [...round.patterns, { id: Date.now().toString(), patternName: "", prizeDescription: "", prizeAmount: "" }],
-          }
+              ...round,
+              patterns: [
+                ...round.patterns,
+                { id: Date.now().toString(), patternName: "", prizeDescription: "", prizeAmount: "" },
+              ],
+            }
           : round
       )
     )
@@ -89,9 +144,9 @@ export function GameCreationForm() {
       prev.map((round) =>
         round.id === roundId
           ? {
-            ...round,
-            patterns: round.patterns.map((p) => (p.id === patternId ? { ...p, [field]: value } : p)),
-          }
+              ...round,
+              patterns: round.patterns.map((p) => (p.id === patternId ? { ...p, [field]: value } : p)),
+            }
           : round
       )
     )
@@ -107,8 +162,12 @@ export function GameCreationForm() {
 
     prizeRounds.forEach((round) => {
       round.patterns.forEach((pattern, index) => {
-        if (!pattern.patternName.trim()) newErrors[`pattern_${round.id}_${pattern.id}`] = `Pattern name for ${round.name}, Pattern ${index + 1} is required`
-        if (!pattern.prizeDescription.trim()) newErrors[`prize_${round.id}_${pattern.id}`] = `Prize description for ${round.name}, Pattern ${index + 1} is required`
+        if (!pattern.patternName.trim())
+          newErrors[`pattern_${round.id}_${pattern.id}`] =
+            `Pattern name for ${round.name}, Pattern ${index + 1} is required`
+        if (!pattern.prizeDescription.trim())
+          newErrors[`prize_${round.id}_${pattern.id}`] =
+            `Prize description for ${round.name}, Pattern ${index + 1} is required`
       })
     })
 
@@ -116,9 +175,8 @@ export function GameCreationForm() {
     return Object.keys(newErrors).length === 0
   }
 
-
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!validateForm()) {
       toast.error("Please fix all errors before submitting")
@@ -126,63 +184,77 @@ export function GameCreationForm() {
     }
 
     try {
-      // 🔹 Fetch JWT token from localStorage
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("access_token")
 
       if (!token) {
         toast.error("You must be logged in to update a game!")
-        return;
+        return
       }
 
-      // 🔹 Prepare the payload
       const payload = {
         title: formData.title,
         description: formData.description,
         number_of_users: parseInt(formData.numberOfUsers),
-        total_prize_pool: totalPrizePool, // You must have computed this earlier
+        total_prize_pool: totalPrizePool,
         date_time: formData.dateTime,
         prize_rounds: prizeRounds,
-      };
+      }
 
-      // 🔹 Send request to Django backend
-      const response = await fetch("http://localhost:8000/api/creator/games/create/", {
-        method: "POST",
+      const response = await fetch(`http://localhost:8000/api/creator/game/${gameId}/update/`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      });
+      })
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("✅ Game created:", data);
-        toast.success("Game created successfully!");
-        // Optionally,  redirect
-        router.push("/creator/dashboard");
-
+        const data = await response.json()
+        console.log("✅ Game updated:", data)
+        toast.success("Game updated successfully!")
+        router.push(`/creator/game/${gameId}/lobby`)
       } else {
-        const errorData = await response.json();
-        console.error("❌ Error creating game:", errorData);
-        toast.error(`Failed to create game: ${JSON.stringify(errorData)}`);
+        const errorData = await response.json()
+        console.error("❌ Error updating game:", errorData)
+        toast.error(`Failed to update game: ${JSON.stringify(errorData.error)}`)
       }
     } catch (err) {
-      console.error("🚨 Network or server error:", err);
-      toast.error("Something went wrong while creating the game.");
+      console.error("🚨 Network or server error:", err)
+      toast.error("Something went wrong while updating the game.")
     }
-  };
+  }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading game data...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20">
       <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Link href={`/creator/game/${gameId}/lobby`}>
+            <Button variant="outline" size="sm">
+              <ArrowLeft size={16} className="mr-2" />
+              Back to Lobby
+            </Button>
+          </Link>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Trophy className="text-primary" size={24} />
-              Create New Game
+              Edit Game
             </CardTitle>
-            <CardDescription>Set up a new Bingo game with custom rules and prizes</CardDescription>
+            <CardDescription>Update game details and prize configuration</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -222,7 +294,13 @@ export function GameCreationForm() {
                   <Label htmlFor="numberOfRounds" className="flex items-center gap-2">
                     <Clock size={16} /> Number of Rounds
                   </Label>
-                  <Input id="numberOfRounds" type="number" value={prizeRounds.length} readOnly className="bg-muted" />
+                  <Input
+                    id="numberOfRounds"
+                    type="number"
+                    value={prizeRounds.length}
+                    readOnly
+                    className="bg-muted"
+                  />
                   <p className="text-xs text-muted-foreground">Automatically updated based on rounds below</p>
                 </div>
 
@@ -261,11 +339,17 @@ export function GameCreationForm() {
                 </CardContent>
               </Card>
 
-              {/* Prize Rounds */}
+              {/* Prize Rounds - Same as creation form */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Prize Configuration</h3>
-                  <Button type="button" variant="outline" size="sm" onClick={addPrizeRound} className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addPrizeRound}
+                    className="flex items-center gap-2"
+                  >
                     <Plus size={16} /> Add Round
                   </Button>
                 </div>
@@ -275,10 +359,18 @@ export function GameCreationForm() {
                     <CardHeader className="pb-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <CardTitle className="text-base">{round.name}</CardTitle>
-                        <div className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">Total: ₹{round.totalPrize.toLocaleString()}</div>
+                        <div className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
+                          Total: ₹{round.totalPrize?.toLocaleString() || 0}
+                        </div>
                       </div>
                       {prizeRounds.length > 1 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removePrizeRound(round.id)} className="text-destructive hover:text-destructive">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removePrizeRound(round.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
                           <Trash2 size={16} />
                         </Button>
                       )}
@@ -292,7 +384,9 @@ export function GameCreationForm() {
                               id={`pattern_${round.id}_${pattern.id}`}
                               value={pattern.patternName}
                               onChange={(e) => updatePattern(round.id, pattern.id, "patternName", e.target.value)}
-                              className={`w-full border rounded p-2 ${errors[`pattern_${round.id}_${pattern.id}`] ? "border-destructive" : ""}`}
+                              className={`w-full border rounded p-2 ${
+                                errors[`pattern_${round.id}_${pattern.id}`] ? "border-destructive" : ""
+                              }`}
                             >
                               <option value="">Select a pattern...</option>
                               <optgroup label="Standard Patterns">
@@ -316,7 +410,9 @@ export function GameCreationForm() {
                                 <option value="four-corners-middle">Four Corners + Middle</option>
                               </optgroup>
                             </select>
-                            {errors[`pattern_${round.id}_${pattern.id}`] && <p className="text-sm text-destructive">{errors[`pattern_${round.id}_${pattern.id}`]}</p>}
+                            {errors[`pattern_${round.id}_${pattern.id}`] && (
+                              <p className="text-sm text-destructive">{errors[`pattern_${round.id}_${pattern.id}`]}</p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
@@ -325,10 +421,14 @@ export function GameCreationForm() {
                               id={`prize_${round.id}_${pattern.id}`}
                               placeholder="Cash Prize / Gift"
                               value={pattern.prizeDescription}
-                              onChange={(e) => updatePattern(round.id, pattern.id, "prizeDescription", e.target.value)}
+                              onChange={(e) =>
+                                updatePattern(round.id, pattern.id, "prizeDescription", e.target.value)
+                              }
                               className={errors[`prize_${round.id}_${pattern.id}`] ? "border-destructive" : ""}
                             />
-                            {errors[`prize_${round.id}_${pattern.id}`] && <p className="text-sm text-destructive">{errors[`prize_${round.id}_${pattern.id}`]}</p>}
+                            {errors[`prize_${round.id}_${pattern.id}`] && (
+                              <p className="text-sm text-destructive">{errors[`prize_${round.id}_${pattern.id}`]}</p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
@@ -344,7 +444,13 @@ export function GameCreationForm() {
 
                           <div className="flex items-end">
                             {round.patterns.length > 1 && (
-                              <Button type="button" variant="ghost" size="sm" onClick={() => removePatternFromRound(round.id, pattern.id)} className="text-destructive hover:text-destructive">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removePatternFromRound(round.id, pattern.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
                                 <Trash2 size={16} />
                               </Button>
                             )}
@@ -352,7 +458,13 @@ export function GameCreationForm() {
                         </div>
                       ))}
 
-                      <Button type="button" variant="outline" size="sm" onClick={() => addPatternToRound(round.id)} className="flex items-center gap-2 w-full">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addPatternToRound(round.id)}
+                        className="flex items-center gap-2 w-full"
+                      >
                         <Plus size={16} /> Add Pattern to {round.name}
                       </Button>
                     </CardContent>
@@ -361,8 +473,14 @@ export function GameCreationForm() {
               </div>
 
               <div className="flex gap-4 pt-6">
-                <Button type="submit" size="lg" className="flex-1">Create Game</Button>
-                {/* <Button type="button" variant="outline" size="lg">Save as Draft</Button> */}
+                <Button type="submit" size="lg" className="flex-1">
+                  Update Game
+                </Button>
+                <Link href={`/creator/game/${gameId}/lobby`}>
+                  <Button type="button" variant="outline" size="lg">
+                    Cancel
+                  </Button>
+                </Link>
               </div>
             </form>
           </CardContent>

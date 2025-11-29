@@ -6,6 +6,7 @@ import { MainNav } from "@/components/navigation/main-nav"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, Users, Calendar, TrendingUp } from "lucide-react"
 
+import Link from "next/link";
 export default function CreatorDashboard() {
   const [games, setGames] = useState([])
   const [stats, setStats] = useState({
@@ -88,9 +89,12 @@ export default function CreatorDashboard() {
               <p className="text-destructive mb-4">Error: {error}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                className="px-4 py-2 text-primary rounded hover:bg-primary/20 border-2 mr-3.5"
               >
                 Retry
+              </button>
+              <button className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90">
+                <Link href="/auth/creator/login">Creator Login</Link>
               </button>
             </div>
           </div>

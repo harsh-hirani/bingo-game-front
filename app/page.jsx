@@ -15,6 +15,12 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>
+              <Link href="/user/dashboard">Player dashboard</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/creator/dashboard">Creator dashboard</Link>
+            </Button>
+            <Button variant="ghost" asChild>
               <Link href="/auth/user/login">Player Login</Link>
             </Button>
             <Button asChild>

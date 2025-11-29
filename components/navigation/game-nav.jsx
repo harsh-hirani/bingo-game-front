@@ -11,24 +11,27 @@ export function GameNav({ gameId, userType = "creator" }) {
   const navItems = [
     {
       title: "Game",
-      href: `/${userType}/game/${gameId}`,
+      "creator":`/creator/game/${gameId}`,
+      'user': `/game/${gameId}`,
       icon: LucideHome,
     },
     {
       title: "Lobby",
-      href: `/${userType}/game/${gameId}/lobby`,
+
+      "creator": `/${userType}/game/${gameId}/lobby`,
+      "user": `/game/${gameId}/lobby`,
       icon: Layout,
     },
        
     {
       title: "Edit",
-      href: `/creator/game/${gameId}/edit`,
+      'creator': `/creator/game/${gameId}/edit`,
       icon: Pen,
     },
   ]
 
   // Only show players tab for creators
-  const filteredItems = userType === "creator" ? navItems : navItems.filter(item => item.title === "Lobby")
+  const filteredItems = userType === "creator" ? navItems : navItems.filter(item => item.title !== "Edit")
 
   return (
     <div className="border-b bg-background">
@@ -36,12 +39,12 @@ export function GameNav({ gameId, userType = "creator" }) {
         <nav className="flex space-x-1">
           {filteredItems.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isActive = pathname === item[userType]
 
             return (
               <Link
-                key={item.href}
-                href={item.href}
+                key={item[userType]}
+                href={item[userType]}
                 className={cn(
                   "flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors hover:text-primary border-b-2",
                   isActive

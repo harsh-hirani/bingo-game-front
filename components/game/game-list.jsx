@@ -59,7 +59,7 @@ export function GameList({ userType, games, showPagination = true }) {
           </p>
         </div>
         {userType === "creator" && (
-          <Link href="/creator/create">
+          <Link href="/creator/create-game">
             <Button>
               <Trophy size={16} className="mr-2" />
               Create New Game
@@ -91,19 +91,19 @@ export function GameList({ userType, games, showPagination = true }) {
                       View Lobby
                     </Button>
                   </Link>
-                  {userType === "creator" && (
+                  {(userType === "creator" && game.status === "upcoming") &&  (
                     <>
                       <Button variant="outline" size="sm">
                         <Edit size={16} className="mr-1" />
                         Edit
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="outline"
                         size="sm"
                         className="text-destructive hover:text-destructive bg-transparent"
                       >
                         <Trash2 size={16} />
-                      </Button>
+                      </Button> */}
                     </>
                   )}
                 </div>

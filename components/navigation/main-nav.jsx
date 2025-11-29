@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState ,useEffect} from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,9 +15,15 @@ import {
 import { Trophy, User, Building2, Home, Plus, Settings, LogOut, Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function MainNav({ userType, userName = "User" }) {
+export function MainNav({ userType ='creator'}) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [userName, setUserName] = useState('User');
+  useEffect(() => {
+    // Read value from localStorage
+    const savedName = localStorage.getItem("user_name");
+    if (savedName) setUserName(savedName);
+  }, []);
 
   const creatorNavItems = [
     { href: "/creator/dashboard", label: "Dashboard", icon: Home },
@@ -27,7 +33,7 @@ export function MainNav({ userType, userName = "User" }) {
 
   const userNavItems = [
     { href: "/user/dashboard", label: "Dashboard", icon: Home },
-    { href: "/user/games", label: "Browse Games", icon: Trophy },
+    { href: "/games", label: "Browse Games", icon: Trophy },
     { href: "/user/history", label: "Game History", icon: User },
   ]
 

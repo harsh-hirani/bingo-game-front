@@ -9,6 +9,8 @@ import { ArrowLeft, Trophy } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner" // or your toast library
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
 export function RoundView({ userType, gameId, roundId }) {
   const [roundData, setRoundData] = useState(null)
   const [gameTitle, setGameTitle] = useState("")
@@ -17,7 +19,7 @@ export function RoundView({ userType, gameId, roundId }) {
   const [wsConnected, setWsConnected] = useState(false)
   const [showWinnerModal, setShowWinnerModal] = useState(false)
   const [latestWinners, setLatestWinners] = useState([])
-  
+
   const wsRef = useRef(null)
   const announcedWinnersRef = useRef(new Set()) // Track announced winners to avoid duplicates
 
@@ -35,7 +37,7 @@ export function RoundView({ userType, gameId, roundId }) {
         setError(null)
 
         const token = localStorage.getItem("access_token")
-        
+
         if (!token) {
           throw new Error("Authentication token not found. Please login again.")
         }
@@ -122,7 +124,7 @@ export function RoundView({ userType, gameId, roundId }) {
     ws.onopen = () => {
       console.log("✅ WebSocket connected")
       setWsConnected(true)
-      
+
       // Request current called numbers on connect
       ws.send(JSON.stringify({
         action: "get_called_numbers"
@@ -131,10 +133,10 @@ export function RoundView({ userType, gameId, roundId }) {
 
     ws.onmessage = (event) => {
       console.log("📨 WebSocket message received:", event.data)
-      
+
       try {
         const data = JSON.parse(event.data)
-        
+
         // Handle connection message
         if (data.message) {
           console.log("💬 Server message:", data.message)
@@ -149,7 +151,7 @@ export function RoundView({ userType, gameId, roundId }) {
             currentNumber: data.number,
           }))
         }
-        
+
         // Handle called numbers update (without new number)
         else if (data.called_numbers && data.number === undefined) {
           console.log("📋 Called numbers updated:", data.called_numbers)
@@ -198,6 +200,8 @@ export function RoundView({ userType, gameId, roundId }) {
 
   // Handle winner announcement
   const handleWinnerAnnouncement = (winners) => {
+    console.log("wins: ",winners);
+    
     const currentUserId = localStorage.getItem("user_id")
     const newWinners = []
 
@@ -208,15 +212,15 @@ export function RoundView({ userType, gameId, roundId }) {
 
       // Create unique key for this pattern win
       const winKey = `${pattern_id}-${winnersList[0].player_id}`
-      
+
       // Skip if already announced
       if (announcedWinnersRef.current.has(winKey)) return
-      
+
       announcedWinnersRef.current.add(winKey)
 
       winnersList.forEach(winner => {
         const isCurrentUser = String(winner.player_id) === String(currentUserId)
-        
+
         newWinners.push({
           pattern_id,
           pattern_name,
@@ -246,7 +250,7 @@ export function RoundView({ userType, gameId, roundId }) {
           if (pattern.id === pattern_id) {
             const winner = winnersList[0]
             const isCurrentUser = String(winner.player_id) === String(currentUserId)
-            
+
             return {
               ...pattern,
               status: isCurrentUser ? "won_by_you" : "won_by_other",
@@ -262,7 +266,7 @@ export function RoundView({ userType, gameId, roundId }) {
     if (newWinners.length > 0) {
       setLatestWinners(newWinners)
       setShowWinnerModal(true)
-      
+
       // Auto-hide modal after 5 seconds
       setTimeout(() => {
         setShowWinnerModal(false)
@@ -289,7 +293,7 @@ export function RoundView({ userType, gameId, roundId }) {
   }
 
   const getBackUrl = () => {
-    return userType === "creator" ? `/creator/game/${gameId}/lobby` : `/game/${gameId}/lobby`
+    return  `/game/${gameId}/lobby`
   }
 
   // Loading state
@@ -316,8 +320,8 @@ export function RoundView({ userType, gameId, roundId }) {
           <h2 className="text-xl font-semibold mb-2">Error Loading Round</h2>
           <p className="text-destructive mb-6">{error}</p>
           <div className="flex gap-4 justify-center">
-            <Button 
-              onClick={() => window.location.reload()} 
+            <Button
+              onClick={() => window.location.reload()}
               variant="default"
             >
               Retry
@@ -351,22 +355,32 @@ export function RoundView({ userType, gameId, roundId }) {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex justify-between items-center">
-          <Link href={getBackUrl()}>
-            <Button variant="outline" size="sm" className="flex items-center gap-2 bg-transparent">
-              <ArrowLeft size={16} />
-              Back to Lobby
-            </Button>
-          </Link>
 
-          {/* WebSocket Status Indicator */}
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-            <span className="text-sm text-muted-foreground">
-              {wsConnected ? 'Live' : 'Disconnected'}
-            </span>
+        {/* here */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-4 mb-4">
+              <Link href={getBackUrl()}>
+                <Button variant="outline" size="sm">
+                  <ArrowLeft size={16} className="mr-2" />
+                  Back to Lobby
+                </Button>
+              </Link>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                <span className="text-sm text-muted-foreground">
+                  {wsConnected ? 'Live' : 'Disconnected'}
+                </span>
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold mb-2">{gameTitle} - Round {roundData.roundNumber}</h1>
+            <p className="text-muted-foreground">Creator View - Manage the game and monitor winners</p>
           </div>
+
+         
         </div>
+        {/* end */}
+
 
         {/* Winner Modal */}
         {showWinnerModal && latestWinners.length > 0 && (
@@ -378,11 +392,11 @@ export function RoundView({ userType, gameId, roundId }) {
                   {latestWinners.some(w => w.is_current_user) ? "🎉 You Won!" : "🏆 Winner!"}
                 </h2>
               </div>
-              
+
               <div className="space-y-4">
                 {latestWinners.map((winner, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className={`p-4 rounded-lg ${winner.is_current_user ? 'bg-green-500/20 border-2 border-green-500' : 'bg-muted'}`}
                   >
                     <p className="font-semibold text-lg">{winner.pattern_name}</p>
@@ -394,7 +408,7 @@ export function RoundView({ userType, gameId, roundId }) {
                 ))}
               </div>
 
-              <Button 
+              <Button
                 onClick={() => setShowWinnerModal(false)}
                 className="w-full mt-6"
               >
@@ -404,21 +418,12 @@ export function RoundView({ userType, gameId, roundId }) {
           </div>
         )}
 
-        {/* Header with Game Title */}
-        <div className="mb-8 text-center">
-          {gameTitle && (
-            <p className="text-lg text-muted-foreground mb-2">{gameTitle}</p>
-          )}
-          <h1 className="text-3xl font-bold mb-2">Round {roundData.number}</h1>
-          <p className="text-muted-foreground">
-            {roundData.status === "live" ? "🔴 Game in Progress" : "✅ Round Completed"}
-          </p>
-        </div>
+       
 
         {/* Creator Controls */}
         {userType === "creator" && (
-          <div className="mb-6 text-center">
-            <Button 
+          <div className="my-6 text-center">
+            <Button
               onClick={handleGenerateNumber}
               disabled={!wsConnected}
               size="lg"
@@ -435,7 +440,7 @@ export function RoundView({ userType, gameId, roundId }) {
         )}
 
         {/* Main Game Layout - 2x2 Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-8 mt-6">
           {/* Called Numbers */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Called Numbers</h2>
